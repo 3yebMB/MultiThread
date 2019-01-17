@@ -1,6 +1,6 @@
 public class Method {
-    final int size = 100; // количество элементов в исходном массиве
-    final int countThread = 11; // количество потоков для второго метода
+    final int size = 10000000; // количество элементов в исходном массиве
+    final int countThread = 33; // количество потоков для второго метода
     int h = size / countThread; // размерность подмассива
     float[][] subArr = new float[countThread][]; // массив с массивами (:
     int last = h; // рзамерноть последнего массива
@@ -15,11 +15,12 @@ public class Method {
     // метод запускающий разные варианты (с одним или несколькими потоками)
     public void go(int method) throws InterruptedException {
         for (int i = 0; i < size; i++) {
-            arr[i] = 1;
+            arr[i] = i;
         }
         switch (method) {
             case 1 :
                 ThreadClass th1 = new ThreadClass(0, arr);
+                System.out.println("Работает один поток...");
                 timeOperation = System.currentTimeMillis();
                 th1.start();
                 th1.join();
@@ -27,6 +28,7 @@ public class Method {
                 System.out.println("На заполнение элементов массива новыми значениями 1 потоку потребовалось " + timeOperation + " мс");
                 break;
             case 2 :
+                System.out.println("\nРаботают " + countThread + " потока...");
                 timeAllOperations = timeOperation = System.currentTimeMillis();
                 separateArray();
                 timeOperation = System.currentTimeMillis() - timeOperation;
@@ -51,37 +53,35 @@ public class Method {
         }
     }
 
+    // метод слияния подмассивов в один
     private void unionSubArray(float[][] subArr){
         pos = 0;
         for (float[] s: subArr){
-            System.arraycopy(s, pos, arr, 0, s.length);
+            System.arraycopy(s, 0, arr, pos, s.length);
             pos += s.length;
         }
-        System.out.println(java.util.Arrays.deepToString(new float[][]{arr}));
     }
 
     // метод разделения массива на равные части
     private void separateArray(){
-
-        if (l !=0){
-            if ((arr.length - (h*countThread)<0)) {
-                h += 1;
-                last = (arr.length % ((countThread - 1) * h));
-            }
-            else
-                last = arr.length - (h*countThread);
-
+        if (l !=0){ // если исходный массив не делится ровна на подмассивы
+            last = arr.length - (h*countThread); // то берём остаток
+            h += 1; // и кол-во эл. в подмассивах увеличиваем на 1.
         }
 
-        for (int i = 0; i < countThread-1; i++) {
+        for (int i = 0; i < countThread; i++) {
+            last--; // т.к. в начале метода увеличили кол-во эл. подмассива, то
+            if (last==0) // тут мы смотрим когда излишки раскидаются по подмассивам
+                h--;     // уменьшим кол-во эл. в последующих подмассивах и больше сюда не зайдём.
+
+            if (i==countThread-1) { // на последней итерации подсчитываем оставшееся кол-во эл.
+                h = arr.length - pos; // для копирования в подмассив
+            }
+
             subArr[i] = new float[h];
             System.arraycopy(arr, pos, subArr[i], 0, h);
             pos += h;
-//            System.out.println(java.util.Arrays.deepToString(new float[][]{subArr[i]}));
+//            System.out.println(java.util.Arrays.deepToString(new float[][]{subArr[i]})); // для отладки. вывод подмассивов с новой строки.
         }
-        subArr[countThread-1] = new float[last];
-        System.arraycopy(arr, pos, subArr[countThread-1], 0, last);
-        pos = 0;
-        System.out.println(java.util.Arrays.deepToString(new float[][]{subArr[countThread-1]}));
     }
 }
